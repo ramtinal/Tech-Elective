@@ -2,6 +2,7 @@
 import pygame # to create the game
 import os #for file navigation purposes
 import random #random number generation for how much and when obstacles show up 
+import sys
 
 
 pygame.init() #initialize the pygame suite 
@@ -62,6 +63,7 @@ class Dinosaur:
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS
+
 
     def update(self, userInput):
         if self.dino_duck:
@@ -145,6 +147,8 @@ class Obstacle:
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image[self.type], self.rect)
+        pygame.draw.rect(SCREEN, (255,0,0), self, 2) 
+        
 
 
 class SmallCactus(Obstacle):
@@ -172,6 +176,7 @@ class Bird(Obstacle):
         if self.index >= 9:
             self.index = 0
         SCREEN.blit(self.image[self.index//5], self.rect)
+        pygame.draw.rect(SCREEN, (255,0,0), self, 2)
         self.index += 1
 
 
@@ -215,7 +220,7 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-                exit()
+                sys.exit()
 
         SCREEN.fill((255, 255, 255))
 
@@ -239,9 +244,10 @@ def main():
             obstacle.update()
             if player.dino_rect.colliderect(obstacle.rect):    
                 pygame.draw.rect(SCREEN, (255,0,0), player.dino_rect, 2)
-                #pygame.time.delay(2000)
-                #death_count += 1
-                #menu(death_count)
+                pygame.time.delay(2000)
+                death_count += 1
+                menu(death_count)
+                sys.exit()
 
 
 
