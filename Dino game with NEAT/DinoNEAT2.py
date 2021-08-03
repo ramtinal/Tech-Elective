@@ -157,7 +157,7 @@ class HigherBird(Obstacle):
     def __init__(self, image):
         self.type = 0
         super().__init__(image, self.type)
-        self.rect.y = 240
+        self.rect.y = 220
         self.index = 0
 
     def draw(self, SCREEN):
@@ -182,7 +182,8 @@ class LowerBird(Obstacle):
 def remove(index):
     dinosaurs.pop(index)
     ge.pop(index)
-    nets.pop(index)
+    nets1.pop(index)
+    nets2.pop(index)
     
 def distance(pos_a, pos_b):
     dx = pos_a[0]-pos_b[0]
@@ -190,12 +191,15 @@ def distance(pos_a, pos_b):
     return math.sqrt(dx**2+dy**2)
 
 def eval_genomes(genomes, config):
-    global game_speed, x_pos_bg, y_pos_bg, obstacles, dinosaurs, points, ge, nets
+# def eval_genomes(genome1, genome2, config):
+    global game_speed, x_pos_bg, y_pos_bg, obstacles, obstacles1, dinosaurs, points, ge, nets1, nets2
     points = 0
     obstacles = []
+    obstacles1 = []
     dinosaurs = []
     ge = []
-    nets = []
+    nets1 = []
+    nets2 = []
     cloud = Cloud() 
     clock = pygame.time.Clock()
     x_pos_bg = 0
@@ -205,9 +209,24 @@ def eval_genomes(genomes, config):
     for genome_id, genome, in genomes:
         dinosaurs.append(Dinosaur())
         ge.append(genome)
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        nets.append(net)
+        network1 = neat.nn.FeedForwardNetwork.create(genome, config)
+        nets1.append(network1)
+        network2 = neat.nn.FeedForwardNetwork.create(genome, config)
+        nets2.append(network2)
         genome.fitness = 0
+    # for genome_id1, gen1, in genome1:
+    #     dinosaurs.append(Dinosaur())
+    #     ge.append(gen1)
+    #     network1 = neat.nn.FeedForwardNetwork.create(gen1, config)
+    #     nets1.append(network1)
+    #     gen1.fitness = 0
+    # for genome_id2, gen2, in genome2:
+    #     dinosaurs.append(Dinosaur())
+    #     ge.append(gen2)
+    #     network2 = neat.nn.FeedForwardNetwork.create(gen2, config)
+    #     nets2.append(network2)
+    #     gen2.fitness = 0
+    
     def score():
         global points, game_speed
         points += 1
@@ -250,14 +269,16 @@ def eval_genomes(genomes, config):
             break
 
         if len(obstacles) == 0:
-            if random.randint(0, 2) == 0:
+            R = random.randint(0, 3)
+            if R == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS))
-            elif random.randint(0, 2) == 1:
+            elif R == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS))
-            elif random.randint(0, 3) == 2:
-                obstacles.append(HigherBird(BIRD))
-            elif random.randint(0, 3) == 3:
+            elif R == 2:
                 obstacles.append(LowerBird(BIRD))
+        # if len(obstacles1) == 0:
+            elif R == 3:
+                obstacles.append(HigherBird(BIRD))
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
@@ -266,27 +287,40 @@ def eval_genomes(genomes, config):
                 if dinosaur.rect.colliderect(obstacle.rect):
                     ge[i].fitness -= 1
                     remove(i)
-
-               
             for i, dinosaur in enumerate(dinosaurs):
-                output = nets[i].activate((dinosaur.rect.y, distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)))
-                if output[0] > 0.5 and dinosaur.rect.y == dinosaur.Y_POS:
+                output1 = nets1[i].activate((dinosaur.rect.y, distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)))
+                if (output1[0] > 0.25) and dinosaur.rect.y == dinosaur.Y_POS:
                     dinosaur.dino_duck = False
                     dinosaur.dino_run = False
-                    dinosaur.dino_jump = True
-                elif output[0] == 0.0 and dinosaur.rect.y == dinosaur.Y_POS:
+                    dinosaur.dino_jump = True #jump
+                elif (output1[0] < 0.25 and output1[0] > -0.25) and dinosaur.rect.y == dinosaur.Y_POS:
                     dinosaur.dino_duck = False
-                    dinosaur.dino_run = True
-                    dinosaur.dino_jump = False #jump
-                elif output[0] < 0.5 and not dinosaur.rect.y == dinosaur.Y_POS:
-                    dinosaur.dino_duck = True #duck
-                    dinosaur.dino_run = False
+                    dinosaur.dino_run = True #do nothing - just run
                     dinosaur.dino_jump = False
-                elif (output[0] == 0.0 or dinosaur.rect.y == dinosaur.Y_POS):
-                    dinosaur.dino_duck = False
-                    dinosaur.dino_run = True #just run
-                    dinosaur.dino_jump = False
-        print(output[0])
+                # elif (output1[0] < -0.25) and dinosaur.rect.y == dinosaur.Y_POS:
+                #     dinosaur.dino_duck = True
+                #     dinosaur.dino_run = False #do nothing - just run
+                #     dinosaur.dino_jump = False
+
+        # for obstacle in obstacles1:
+        #     obstacle.draw(SCREEN)
+        #     obstacle.update()
+        #     for i, dinosaur in enumerate(dinosaurs):
+        #         if dinosaur.rect.colliderect(obstacle.rect):
+        #             ge[i].fitness -= 1
+        #             remove(i)            
+
+        #     for i, dinosaur in enumerate(dinosaurs):
+        #         output2 = nets2[i].activate((dinosaur.rect.y, distance((dinosaur.rect.x, dinosaur.rect.y),obstacle.rect.midtop)))
+        #         if output2[0] < 0 and dinosaur.rect.y == dinosaur.Y_POS:
+        #             dinosaur.dino_duck = True #duck
+        #             dinosaur.dino_run = False
+        #             dinosaur.dino_jump = False
+        #         elif output2[0] > 0 and dinosaur.rect.y == dinosaur.Y_POS:
+        #             dinosaur.dino_duck = False
+        #             dinosaur.dino_run = True #do nothing - just run
+        #             dinosaur.dino_jump = False
+        print(output1)
         statistics()
         score()
         background()
@@ -295,8 +329,9 @@ def eval_genomes(genomes, config):
         clock.tick(30)
         pygame.display.update()
 
+# def run(config_path,config_path2):
 def run(config_path):
-    global pop
+    global pop,pop2
     config = neat.config.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -304,14 +339,26 @@ def run(config_path):
         neat.DefaultStagnation,
         config_path
     )       
+    # config2 = neat.config.Config(
+    #     neat.DefaultGenome,
+    #     neat.DefaultReproduction,
+    #     neat.DefaultSpeciesSet,
+    #     neat.DefaultStagnation,
+    #     config_path2
+    # )       
 
     pop = neat.Population(config)
-    pop.run(eval_genomes, 50)
+    # pop2 = neat.Population(config2)
+    pop.run(eval_genomes,50)
+    # pop2.run(eval_genomes, 50)
+
 
 if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "d:\Onedrive\OneDrive - Conestoga College\Conestoga\YEAR 4\SEMESTER 2\Artificial Intelligence\Project\Dino game with NEAT\config.txt")
+    config_path2 = os.path.join(local_dir, "d:\Onedrive\OneDrive - Conestoga College\Conestoga\YEAR 4\SEMESTER 2\Artificial Intelligence\Project\Dino game with NEAT\config2.txt")
+    # run(config_path,config_path2)
     run(config_path)
-
+    
 eval_genomes()
 
