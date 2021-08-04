@@ -272,6 +272,7 @@ def menu(death_count):
 
         if death_count == 0:
             text = font.render("Press any Key to Start", True, (0, 0, 0))
+            text = font.render("Use Arrow keys to play", True, (0, 0, 0))
         elif death_count > 0:
             text = font.render("Press any Key to Restart", True, (0, 0, 0))
             score = font.render("Your Score: " + str(points), True, (0, 0, 0))
